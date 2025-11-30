@@ -52,7 +52,7 @@ app.post('/ask', async (req, res) => {
       return res.status(400).json({ error: 'Question or Image URL is required.' });
     }
 
-    const model = 'google/gemini-2.0-flash-exp:free'; // Use the free, experimental Gemini Flash model
+    const model = 'google/gemini-flash-1.5'; // Use the stable, free Gemini Flash model
     let messages;
 
     // Prepare messages for the API call, handling images if provided
@@ -77,7 +77,7 @@ app.post('/ask', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     // Call the OpenRouter API with streaming enabled
-    const stream = await openrouter.chat.completions.create({
+    const stream = await openrouter.completions.create({
       model: model,
       messages: messages,
       stream: true,
