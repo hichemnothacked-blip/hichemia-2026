@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>Legal AI Assistant</title>
+    <style>
+        :root {
+            --background-color: #121212;
+            --container-bg-color: #1e1e1e;
+            --header-gradient: linear-gradient(90deg, #8e44ad, #3498db);
+            --user-bubble-gradient: linear-gradient(45deg, #8e44ad, #9b59b6);
+            --ai-bubble-color: #333333;
+            --text-color: #f0f0f0;
+            --light-text-color: #ffffff;
+            --input-bg-color: rgba(255, 255, 255, 0.05);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --accent-color: #9b59b6;
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--container-bg-color);
+        }
+        body { 
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            background: var(--background-color); 
+            color: var(--text-color);
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+        #chat-container { 
+            width: 90%; 
+            max-width: 800px; 
+            height: 90vh; 
+            background: var(--container-bg-color); 
+            border-radius: 16px; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+        }
+        header { 
+            background: var(--header-gradient); 
+            color: var(--light-text-color); 
+            padding: 20px; 
+            text-align: center; 
+        }
+        header h1 { margin: 0; font-size: 1.5em; font-weight: 600; }
+        #chat-box { flex-grow: 1; padding: 20px; overflow-y: auto; }
+        .message { margin-bottom: 20px; display: flex; flex-direction: column; animation: fadeIn 0.5s ease-in-out; }
+        .user-message { align-items: flex-end; }
+        .ai-message { align-items: flex-start; }
+        .message-bubble { max-width: 80%; padding: 14px 20px; border-radius: 20px; line-height: 1.6; font-weight: 400; }
+        .user-bubble { background: var(--user-bubble-gradient); color: var(--light-text-color); border-bottom-right-radius: 5px; }
+        .ai-bubble { background: var(--ai-bubble-color); color: var(--text-color); border-bottom-left-radius: 5px; }
+        #input-area { 
+            display: flex; 
+            padding: 15px; 
+            border-top: 1px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        #user-input, #image-url-input { 
+            flex-grow: 1; 
+            background: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 25px; 
+            padding: 12px 20px; 
+            font-size: 1em; 
+            outline: none; 
+            color: var(--text-color);
+            transition: border-color 0.3s, box-shadow 0.3s; 
+            font-family: 'Poppins', sans-serif; 
+        }
+        #user-input::placeholder, #image-url-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+        
+        .ai-bubble pre { background-color: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: 'Courier New', Courier, monospace; }
+        .ai-bubble code { font-family: 'Courier New', Courier, monospace; }
+        .ai-bubble p { margin-top: 0; margin-bottom: 1em; }
+        .ai-bubble p:last-child { margin-bottom: 0; }
+
+        #user-input:focus, #image-url-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.3); }
+        #image-url-input { margin-left: 10px; }
+        #send-btn { background: var(--accent-color); color: white; border: none; border-radius: 50%; width: 48px; height: 48px; margin-left: 10px; cursor: pointer; font-size: 1.5em; transition: background-color 0.3s, transform 0.2s; display: flex; align-items: center; justify-content: center; }
+        #send-btn:hover { background: #8e44ad; }
+        #send-btn:active { transform: scale(0.95); }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+            padding: 5px;
+            margin-left: 5px;
+        }
+        .ai-message:hover .copy-btn, .copy-btn:hover {
+            opacity: 1;
+            color: var(--accent-color);
+        }
+
+        .loading-indicator { text-align: center; padding: 10px; }
+        .loading-indicator span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-color); margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+        .loading-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Responsive Refinements for Small Screens --- */
+        @media (max-width: 480px) {
+            #chat-box { padding: 15px; }
+            #input-area { padding: 10px; }
+            header h1 { font-size: 1.3em; }
+            .message-bubble { padding: 12px 18px; }
+        }
+
+        footer { text-align: center; padding: 15px; font-size: 0.8em; color: rgba(255, 255, 255, 0.4); background-color: #121212; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <header>
+            <h1>Legal AI Assistant</h1>
+        </header>
+        <div id="chat-box">
+            <!-- Chat messages will appear here -->
+        </div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Ask a question...">
+            <input type="text" id="image-url-input" placeholder="Optional: Image URL...">
+            <button id="send-btn" title="Send Message">&#10148;</button>
+        </div>
+        <footer>حقوق النشر ©2025 هشام. جميع الحقوق محفوظة.</footer>
+    </div>
+
+    <!-- Load the 'marked' library from a CDN to parse markdown in the browser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const imageUrlInput = document.getElementById('image-url-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        async function handleSendMessage() {
+            const question = userInput.value.trim();
+            const imageUrl = imageUrlInput.value.trim();
+            if (!question && !imageUrl) return;
+
+            // Display the user's message
+            let userMessageText = question;
+            if (imageUrl) {
+                // Add a clear indicator that an image was sent with the prompt
+                userMessageText = question ? `${question}\n(Image provided)` : '(Image provided)';
+            }
+            addMessage(userMessageText, 'user');
+
+            userInput.value = '';
+            imageUrlInput.value = '';
+            showLoadingIndicator();
+
+            try {
+                // --- New Streaming Logic ---
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question: question, imageUrl: imageUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                removeLoadingIndicator();
+                // Create a new, empty AI message bubble to stream into
+                const aiBubble = addMessage('', 'ai');
+                let fullResponse = '';
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const textChunk = decoder.decode(value);
+                    const lines = textChunk.split('\n\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            const data = line.substring(5); // Remove "data:" prefix
+                            if (data.trim() === '{"done":true}') {
+                                return; // Stream finished
+                            }
+                            const json = JSON.parse(data);
+                            if (json.chunk) {
+                                fullResponse += json.chunk;
+                                // Use marked to parse the full response so far and update the bubble
+                                aiBubble.innerHTML = marked.parse(fullResponse);
+                                chatBox.scrollTop = chatBox.scrollHeight;
+                            }
+                        }
+                    }
+                }
+
+            } catch (error) {
+                removeLoadingIndicator();
+                addMessage(`Sorry, an error occurred: ${error.message}`, 'ai');
+                console.error('Error:', error);
+            }
+        }
+
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `message-bubble ${sender}-bubble`;
+
+            if (sender === 'ai') {
+                // For AI messages, render the text as HTML
+                bubble.innerHTML = text;
+
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerHTML = '&#128203;'; // Clipboard icon
+                button.title = 'Copy text';
+                messageDiv.appendChild(bubble);
+                messageDiv.appendChild(button); // Place button next to the bubble
+                button.onclick = () => {
+                    // Use innerText to copy the text content without HTML tags
+                    const textToCopy = bubble.innerText;
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        button.innerHTML = '&#10004;'; // Checkmark icon
+                        setTimeout(() => {
+                            button.innerHTML = '&#128203;'; // Revert to clipboard icon
+                        }, 1500);
+                    });
+                };
+            } else {
+                // For user messages, just use plain text
+                bubble.textContent = text;
+                messageDiv.appendChild(bubble);
+            }
+
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return bubble; // Return the bubble element
+        }
+
+        function showLoadingIndicator() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'loading-indicator';
+            loadingDiv.innerHTML = '<span></span><span></span><span></span>';
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeLoadingIndicator() {
+            const indicator = chatBox.querySelector('.loading-indicator');
+            if (indicator) {
+                chatBox.removeChild(indicator);
+            }
+        }
+
+        sendBtn.addEventListener('click', handleSendMessage);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+        imageUrlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
