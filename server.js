@@ -77,7 +77,7 @@ app.post('/ask', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     // Call the OpenRouter API with streaming enabled
-    const stream = await openrouter.chat.stream({
+    const stream = await openrouter.chat.completions.create({
       model: model,
       messages: messages,
       stream: true,
